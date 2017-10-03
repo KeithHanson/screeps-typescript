@@ -22,20 +22,7 @@ export class NeedGenerator {
   }
 
   private static getCreepsCount(): number {
-    let creepsCount = 0;
-
-    for (const creepName in Game.creeps) {
-
-      const currentCreep = Game.creeps[creepName];
-
-      console.log(currentCreep);
-
-      creepsCount += 1;
-    }
-
-    console.log(creepsCount);
-
-    return creepsCount;
+    return Object.keys(Game.creeps).length;
   }
 
   public creeps: Creep[];

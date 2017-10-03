@@ -29,10 +29,24 @@ export class NeedQueue {
     }
   }
 
+  public static getJobCount(): number {
+    return NeedQueue.currentQueue().queueArray().length;
+  }
+
   public static doAllJobs() {
-    for (const need of NeedQueue.currentQueue().queueArray()) {
-      console.log(`Doing job: ${need.hash()}`);
-      need.doJob();
+    console.log(`Current Needs Count: ${this.getJobCount()}`);
+
+    let need = NeedQueue.currentQueue().queueArray().pop();
+
+    while (need) {
+      if (need.doJob()) {
+        console.log(`Successfully completed job: ${need.hash()}`);
+      } else {
+        console.log(`Requeuing job - ${need.hash()}`);
+        NeedQueue.currentQueue().queueArray().push(need);
+      }
+
+      need = NeedQueue.currentQueue().queueArray().pop();
     }
   }
 
