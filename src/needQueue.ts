@@ -9,26 +9,6 @@ export class NeedQueue {
     return this._currentQueue;
   }
 
-  public static findGreatestNeedNearMe(roomObject: RoomObject): any {
-    if (NeedQueue.currentQueue().queueArray().length > 0) {
-      let greatestCostNeed = null;
-      let greatestCost = 100000000;
-
-      for (const need of NeedQueue.currentQueue().queueArray()) {
-        const cost = PathFinder.search(roomObject.pos, need.location).cost;
-
-        if (cost < greatestCost) {
-          greatestCost = cost;
-          greatestCostNeed = need;
-        }
-      }
-
-      return greatestCostNeed;
-    } else {
-      return null;
-    }
-  }
-
   public static getJobCount(): number {
     return NeedQueue.currentQueue().queueArray().length;
   }
@@ -36,17 +16,24 @@ export class NeedQueue {
   public static doAllJobs() {
     console.log(`Current Needs Count: ${this.getJobCount()}`);
 
-    let need = NeedQueue.currentQueue().queueArray().pop();
+    for (const needPosition in NeedQueue.currentQueue().queueArray()) {
+      const need = NeedQueue.currentQueue().queueArray()[needPosition];
 
-    while (need) {
       if (need.doJob()) {
         console.log(`Successfully completed job: ${need.hash()}`);
+        NeedQueue.currentQueue().queueArray().splice(parseInt(needPosition, 10), 1);
       } else {
-        console.log(`Requeuing job - ${need.hash()}`);
-        NeedQueue.currentQueue().queueArray().push(need);
+        console.log(`Job not finished - ${need.hash()}`);
       }
+    }
+  }
 
-      need = NeedQueue.currentQueue().queueArray().pop();
+  public static clearQueue() {
+    NeedQueue.currentQueue()._queueArray = new Array<Need>();
+    for (const creepName in Game.creeps) {
+      const creep = Game.creeps[creepName];
+
+      creep.memory.isBusy = false;
     }
   }
 
@@ -69,9 +56,10 @@ export class NeedQueue {
   public insertNeed(need: Need): boolean {
     console.log("Inserting Need... " + need.hash());
 
-    const duplicateNeed = this.findFirstNeedByHash(need.hash());
+    const duplicateNeed = _.any(NeedQueue.currentQueue().queueArray(),
+                                (thisNeed: Need) => thisNeed.hash() === need.hash());
 
-    if (duplicateNeed != null) {
+    if (duplicateNeed) {
       console.log("Found duplicate need. Ignoring.");
       return false;
     } else {
@@ -79,14 +67,5 @@ export class NeedQueue {
       NeedQueue.currentQueue().queueArray().push(need);
       return true;
     }
-  }
-
-  private findFirstNeedByHash(hash: string): any {
-    for (const need of NeedQueue.currentQueue().queueArray()) {
-      if (need.hash() === hash) {
-        return need;
-      }
-    }
-    return null;
   }
 }
