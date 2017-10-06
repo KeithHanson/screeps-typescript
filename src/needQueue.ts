@@ -20,10 +20,13 @@ export class NeedQueue {
       const need = NeedQueue.currentQueue().queueArray()[needPosition];
 
       if (need.doJob()) {
-        console.log(`Successfully completed job: ${need.hash()}`);
         NeedQueue.currentQueue().queueArray().splice(parseInt(needPosition, 10), 1);
+      }
+
+      if (need.worker) {
+        // console.log(`Active Job - ${need.hash()} | Owner: ${need.worker.name}`);
       } else {
-        console.log(`Job not finished - ${need.hash()}`);
+        // console.log(`Inactive Job - ${need.hash()}`);
       }
     }
   }
@@ -54,16 +57,12 @@ export class NeedQueue {
   }
 
   public insertNeed(need: Need): boolean {
-    console.log("Attempting to inserting Need... " + need.hash());
-
     const shouldAddNeed = _.select(NeedQueue.currentQueue().queueArray(),
                                 (thisNeed: Need) => thisNeed.hash() === need.hash()).length <= need.maxActiveNeeds;
 
     if (!shouldAddNeed) {
-      console.log("Found duplicate need or exceeded max active needs. Ignoring.");
       return false;
     } else {
-      console.log("No duplicate needs found. Inserting.");
       NeedQueue.currentQueue().queueArray().push(need);
       return true;
     }

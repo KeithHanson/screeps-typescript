@@ -2,7 +2,7 @@ import {Need} from "../need";
 import {NeedQueue} from "../needQueue";
 import {NeedPriorities} from "./needPriorities";
 
-export const BASE_CREEP_BODY = [WORK, MOVE, CARRY];
+export const BASE_CREEP_BODY = [WORK, WORK, MOVE, MOVE, CARRY];
 
 export class CreepNeed extends Need {
   public owner: Spawn;

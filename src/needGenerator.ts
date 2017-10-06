@@ -1,8 +1,9 @@
 import { Need } from "need";
+import { BuildNeed } from "needs/buildNeed";
 import { CreepNeed } from "needs/creepNeed";
 import { FillContainerNeed } from "needs/fillContainerNeed";
 
-export const MAX_CREEPS = 3;
+export const MAX_CREEPS = 8;
 
 export const MAIN_SPAWN = "Spawn1";
 
@@ -18,6 +19,7 @@ export class NeedGenerator {
   public static generateNeeds(): void {
     this.ensureCreepCount();
     this.fillEmptyContainers();
+    this.findConstructionSites();
   }
 
   private static ensureCreepCount(): CreepNeed[] {
@@ -37,11 +39,26 @@ export class NeedGenerator {
     return Object.keys(Game.creeps).length;
   }
 
+  private static findConstructionSites(): Need[] {
+    const needs = new Array<Need>();
+
+    for (const key in Game.constructionSites) {
+      const site: ConstructionSite = Game.constructionSites[key];
+
+      if (site.progress < site.progressTotal) {
+        needs.push(new BuildNeed(site));
+      }
+    }
+
+    return needs;
+  }
+
   private static fillEmptyContainers(): Need[] {
     const options = {
       filter: (item: Structure) => item.structureType === STRUCTURE_SPAWN ||
         item.structureType === STRUCTURE_EXTENSION ||
-        item.structureType === STRUCTURE_CONTAINER
+        item.structureType === STRUCTURE_CONTAINER // ||
+        // item.structureType === STRUCTURE_CONTROLLER
     };
 
     const energyContainers = MY_ROOM.find(FIND_MY_STRUCTURES, options);
@@ -72,6 +89,11 @@ export class NeedGenerator {
           currentEnergy = typedContainer.energy;
           currentTotalEnergy = typedContainer.energyCapacity;
           break;
+        case STRUCTURE_CONTROLLER:
+          typedContainer = container as StructureController;
+
+          currentEnergy = typedContainer.progress;
+          currentTotalEnergy = typedContainer.progressTotal;
       }
 
       if (typedContainer) {
