@@ -1,6 +1,6 @@
 import { NeedPriorities } from "./needs/needPriorities";
 
-export const ROOM_NAME = "W7N7";
+export const ROOM_NAME = "W7N3";
 
 export const MY_ROOM = Game.rooms[ROOM_NAME];
 
@@ -13,11 +13,13 @@ export class Need {
   public location: RoomPosition;
   public owner: any;
   public worker: Creep;
+  public maxActiveNeeds: number;
 
   constructor(priority: NeedPriorities, type: string, location: RoomPosition) {
     this.priority = priority;
     this.type = type;
     this.location = location;
+    this.maxActiveNeeds = 1;
   }
 
   public hash(): string {
@@ -26,21 +28,14 @@ export class Need {
 
   public findWorker(): boolean {
     if (this.worker !== undefined) {
-      console.log("Found worker.");
-      console.log(this.worker);
-
       this.worker = Game.creeps[this.worker.name];
 
       return true;
     }
 
-    console.log("Finding worker...");
-
     const myCreeps = MY_ROOM.find(FIND_MY_CREEPS, {
       filter: (creep: Creep) => creep.memory.isBusy === undefined || creep.memory.isBusy === false
     });
-
-    console.log(`Possible creeps for worker: ${myCreeps.length}`);
 
     for (const creep of myCreeps) {
       const typedCreep: Creep = creep as Creep;

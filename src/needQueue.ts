@@ -54,13 +54,13 @@ export class NeedQueue {
   }
 
   public insertNeed(need: Need): boolean {
-    console.log("Inserting Need... " + need.hash());
+    console.log("Attempting to inserting Need... " + need.hash());
 
-    const duplicateNeed = _.any(NeedQueue.currentQueue().queueArray(),
-                                (thisNeed: Need) => thisNeed.hash() === need.hash());
+    const shouldAddNeed = _.select(NeedQueue.currentQueue().queueArray(),
+                                (thisNeed: Need) => thisNeed.hash() === need.hash()).length <= need.maxActiveNeeds;
 
-    if (duplicateNeed) {
-      console.log("Found duplicate need. Ignoring.");
+    if (!shouldAddNeed) {
+      console.log("Found duplicate need or exceeded max active needs. Ignoring.");
       return false;
     } else {
       console.log("No duplicate needs found. Inserting.");

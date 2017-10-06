@@ -2,11 +2,11 @@ import {Need} from "../need";
 import {NeedQueue} from "../needQueue";
 import {NeedPriorities} from "./needPriorities";
 
-export const ROOM_NAME = "W7N7";
+export const ROOM_NAME = "W7N3";
 
 export const MY_ROOM = Game.rooms[ROOM_NAME];
 
-export const ENERGY_SOURCE = Game.getObjectById("33bd077274d064f") as Source;
+export const ENERGY_SOURCE = Game.getObjectById("9263077296e02bb") as Source;
 
 export class FillContainerNeed extends Need {
   public owner: Structure;
@@ -15,14 +15,13 @@ export class FillContainerNeed extends Need {
     super(NeedPriorities.HARVEST, "fillContainer", structure.pos);
 
     this.owner = structure;
+    this.maxActiveNeeds = 2;
 
     NeedQueue.currentQueue().insertNeed(this);
   }
 
   public doJob() {
     if (this.findWorker()) {
-
-      console.log(`Trying to execute task... ${this.worker.name} ${_.sum(this.worker.carry)}/${this.worker.carryCapacity} -> ${this.hash()}`);
 
       if (this.worker.carry.energy === this.worker.carryCapacity) {
         this.worker.say("Transfering");
@@ -42,11 +41,8 @@ export class FillContainerNeed extends Need {
           });
         } else if (transferResult === OK || transferResult === ERR_FULL) {
           const complete = this.checkCompletion();
-          console.log(`Is Complete? ${complete}`);
           return complete;
         }
-
-        console.log(`Transfer Result: ${transferResult}`);
 
       } else {
         this.worker.say("Harvesting");
@@ -79,6 +75,8 @@ export class FillContainerNeed extends Need {
     let currentTotalEnergy = -1;
     let typedContainer = null;
 
+    this.owner = Game.getObjectById(this.owner.id) as Structure;
+
     switch (this.owner.structureType) {
       case STRUCTURE_CONTAINER:
         typedContainer = this.owner as StructureContainer;
@@ -86,7 +84,7 @@ export class FillContainerNeed extends Need {
         currentEnergy = typedContainer.store.energy;
         currentTotalEnergy = typedContainer.storeCapacity;
 
-        console.log(`Structure Energy: ${currentEnergy}/${currentTotalEnergy}`);
+        console.log(`${currentEnergy}/${currentTotalEnergy}`);
 
         return currentEnergy === currentTotalEnergy;
       case STRUCTURE_EXTENSION:
@@ -95,7 +93,7 @@ export class FillContainerNeed extends Need {
         currentEnergy = typedContainer.energy;
         currentTotalEnergy = typedContainer.energyCapacity;
 
-        console.log(`Structure Energy: ${currentEnergy}/${currentTotalEnergy}`);
+        console.log(`${currentEnergy}/${currentTotalEnergy}`);
 
         return currentEnergy === currentTotalEnergy;
       case STRUCTURE_SPAWN:
@@ -104,7 +102,7 @@ export class FillContainerNeed extends Need {
         currentEnergy = typedContainer.energy;
         currentTotalEnergy = typedContainer.energyCapacity;
 
-        console.log(`Structure Energy: ${currentEnergy}/${currentTotalEnergy}`);
+        console.log(`${currentEnergy}/${currentTotalEnergy}`);
 
         return currentEnergy === currentTotalEnergy;
     }

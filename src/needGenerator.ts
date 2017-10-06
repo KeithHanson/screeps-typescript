@@ -1,3 +1,4 @@
+import { Need } from "need";
 import { CreepNeed } from "needs/creepNeed";
 import { FillContainerNeed } from "needs/fillContainerNeed";
 
@@ -7,7 +8,7 @@ export const MAIN_SPAWN = "Spawn1";
 
 export const DEBUG = false;
 
-export const ROOM_NAME = "W7N7";
+export const ROOM_NAME = "W7N3";
 
 export const MY_ROOM = Game.rooms[ROOM_NAME];
 
@@ -19,23 +20,24 @@ export class NeedGenerator {
     this.fillEmptyContainers();
   }
 
-  private static ensureCreepCount(): void {
+  private static ensureCreepCount(): CreepNeed[] {
     const count = this.getCreepsCount();
+    const needs = new Array<CreepNeed>();
 
     // Do we need creeps?
     if (count < MAX_CREEPS) {
-      console.log("Attempting to create a new creep need.");
-
       const mainSpawn = Game.spawns[MAIN_SPAWN];
-      new CreepNeed(mainSpawn);
+      needs.push(new CreepNeed(mainSpawn));
     }
+
+    return needs;
   }
 
   private static getCreepsCount(): number {
     return Object.keys(Game.creeps).length;
   }
 
-  private static fillEmptyContainers(): void {
+  private static fillEmptyContainers(): Need[] {
     const options = {
       filter: (item: Structure) => item.structureType === STRUCTURE_SPAWN ||
         item.structureType === STRUCTURE_EXTENSION ||
@@ -43,6 +45,7 @@ export class NeedGenerator {
     };
 
     const energyContainers = MY_ROOM.find(FIND_MY_STRUCTURES, options);
+    const needsGenerated: Need[] = new Array<Need>();
 
     for ( const container of energyContainers) {
 
@@ -73,11 +76,12 @@ export class NeedGenerator {
 
       if (typedContainer) {
         if (currentEnergy < currentTotalEnergy) {
-          console.log(`Trying to create FillContainerNeed for ${typedContainer.id}.`);
-          new FillContainerNeed(typedContainer);
+          needsGenerated.push(new FillContainerNeed(typedContainer));
         }
       }
     }
+
+    return needsGenerated;
   }
 
   public creeps: Creep[];

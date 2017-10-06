@@ -18,7 +18,6 @@ export class CreepNeed extends Need {
   public doJob(): boolean {
     if (this.owner) {
       const result = this.owner.spawnCreep(BASE_CREEP_BODY, `${this.hash()}-${this.generateUUID()}`);
-      console.log(`Result of Create Creep operation: ${result}`);
 
       if (result === 0) {
         return true;
