@@ -1,17 +1,14 @@
-import { Need } from "need";
+import * as Config from "./config";
+
 import { BuildNeed } from "needs/buildNeed";
+
 import { CreepNeed } from "needs/creepNeed";
+
 import { FillContainerNeed } from "needs/fillContainerNeed";
 
-export const MAX_CREEPS = 8;
+import { Need } from "need";
 
-export const MAIN_SPAWN = "Spawn1";
-
-export const DEBUG = false;
-
-export const ROOM_NAME = "W7N3";
-
-export const MY_ROOM = Game.rooms[ROOM_NAME];
+import { MinerNeed } from "needs/minerNeed";
 
 export class NeedGenerator {
   // START HERE - This is where you should focus
@@ -20,6 +17,10 @@ export class NeedGenerator {
     this.ensureCreepCount();
     this.fillEmptyContainers();
     this.findConstructionSites();
+
+    if (this.getCreepsCount() > 1) {
+      this.setMiners();
+    }
   }
 
   private static ensureCreepCount(): CreepNeed[] {
@@ -27,9 +28,8 @@ export class NeedGenerator {
     const needs = new Array<CreepNeed>();
 
     // Do we need creeps?
-    if (count < MAX_CREEPS) {
-      const mainSpawn = Game.spawns[MAIN_SPAWN];
-      needs.push(new CreepNeed(mainSpawn));
+    if (count < Config.MAX_CREEPS) {
+      needs.push(new CreepNeed(Config.MAIN_SPAWN_OBJECT));
     }
 
     return needs;
@@ -54,14 +54,7 @@ export class NeedGenerator {
   }
 
   private static fillEmptyContainers(): Need[] {
-    const options = {
-      filter: (item: Structure) => item.structureType === STRUCTURE_SPAWN ||
-        item.structureType === STRUCTURE_EXTENSION ||
-        item.structureType === STRUCTURE_CONTAINER // ||
-        // item.structureType === STRUCTURE_CONTROLLER
-    };
-
-    const energyContainers = MY_ROOM.find(FIND_MY_STRUCTURES, options);
+    const energyContainers = Config.MY_ROOM.find(FIND_STRUCTURES);
     const needsGenerated: Need[] = new Array<Need>();
 
     for ( const container of energyContainers) {
@@ -74,7 +67,7 @@ export class NeedGenerator {
         case STRUCTURE_CONTAINER:
           typedContainer = container as StructureContainer;
 
-          currentEnergy = _.sum(typedContainer.store);
+          currentEnergy = typedContainer.store.energy;
           currentTotalEnergy = typedContainer.storeCapacity;
           break;
         case STRUCTURE_EXTENSION:
@@ -89,21 +82,42 @@ export class NeedGenerator {
           currentEnergy = typedContainer.energy;
           currentTotalEnergy = typedContainer.energyCapacity;
           break;
+        case STRUCTURE_TOWER:
+          typedContainer = container as StructureTower;
+
+          currentEnergy = typedContainer.energy;
+          currentTotalEnergy = typedContainer.energyCapacity;
+          break;
         case STRUCTURE_CONTROLLER:
           typedContainer = container as StructureController;
 
           currentEnergy = typedContainer.progress;
           currentTotalEnergy = typedContainer.progressTotal;
+
+          Config.debugLog(`Controller Progress: ${currentEnergy}/${currentTotalEnergy}`);
+          break;
       }
 
       if (typedContainer) {
-        if (currentEnergy < currentTotalEnergy) {
+        if (currentEnergy !== currentTotalEnergy) {
           needsGenerated.push(new FillContainerNeed(typedContainer));
         }
       }
     }
 
     return needsGenerated;
+  }
+
+  private static setMiners(): Need[] {
+    const needs = new Array<Need>();
+
+    const sources: Source[] = Config.MY_ROOM.find(FIND_SOURCES);
+
+    for (const source of sources) {
+      needs.push(new MinerNeed(source));
+    }
+
+    return needs;
   }
 
   public creeps: Creep[];

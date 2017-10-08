@@ -2,11 +2,11 @@ import {Need} from "../need";
 import {NeedQueue} from "../needQueue";
 import {NeedPriorities} from "./needPriorities";
 
-export const ROOM_NAME = "W7N3";
+import * as Config from "../config";
 
-export const MY_ROOM = Game.rooms[ROOM_NAME];
+// import {Traveler} from "traveler";
 
-export const ENERGY_SOURCE = Game.getObjectById("9263077296e02bb") as Source;
+// const travelerInstance = new Traveler();
 
 export class FillContainerNeed extends Need {
   public owner: Structure;
@@ -15,7 +15,21 @@ export class FillContainerNeed extends Need {
     super(NeedPriorities.HARVEST, "fillContainer", structure.pos);
 
     this.owner = structure;
-    this.maxActiveNeeds = 2;
+    this.maxActiveNeeds = 3;
+
+    switch (structure.structureType) {
+      case STRUCTURE_CONTAINER:
+        this.priority = 25;
+        this.maxActiveNeeds = 1;
+        break;
+      case STRUCTURE_SPAWN:
+        this.priority = 1;
+        break;
+      case STRUCTURE_CONTROLLER:
+        this.priority = 30;
+        this.maxActiveNeeds = 3;
+        break;
+    }
 
     NeedQueue.currentQueue().insertNeed(this);
   }
@@ -31,6 +45,8 @@ export class FillContainerNeed extends Need {
     }
 
     const result = this.checkCompletion();
+
+    Config.debugLog(`*** ${this.hash()} | ${this.worker ? this.worker.name : "None"} | Completion? ${result}`);
 
     if (result && this.worker !== undefined && this.worker.memory !== undefined) {
       this.worker.memory.isBusy = false;
@@ -59,28 +75,35 @@ export class FillContainerNeed extends Need {
 
       const energyLeft = this.getEnergyLeft();
 
-      console.log(`TRANSFER RESULT: ${transferResult}. ENERGY LEFT: ${energyLeft}`);
+      Config.debugLog(`TRANSFER RESULT: ${transferResult}. ENERGY LEFT: ${energyLeft}`);
 
       if (energyLeft < this.worker.carryCapacity) {
         transferResult = this.worker.transfer(this.owner, RESOURCE_ENERGY, energyLeft);
+      }
+
+      if (transferResult === ERR_FULL) {
+        transferResult = this.worker.transfer(this.owner, RESOURCE_ENERGY, 1);
       }
     }
 
     if (transferResult === ERR_NOT_IN_RANGE) {
       this.worker.moveTo(this.owner.pos);
+      // travelerInstance.travelTo(this.worker, {pos: this.owner.pos});
     }
   }
 
   private handleHarvest(): void {
-    if (this.worker.harvest(ENERGY_SOURCE) === ERR_NOT_IN_RANGE) {
-      this.worker.moveTo(ENERGY_SOURCE.pos);
-    }
+    this.getEnergy();
   }
 
   private checkCompletion(): boolean {
     let currentEnergy = -1;
     let currentTotalEnergy = -1;
     let typedContainer = null;
+
+    if (this.owner === undefined) {
+      return true;
+    }
 
     this.owner = Game.getObjectById(this.owner.id) as Structure;
 
@@ -108,6 +131,13 @@ export class FillContainerNeed extends Need {
         return currentEnergy === currentTotalEnergy;
       case STRUCTURE_CONTROLLER:
         return false;
+      case STRUCTURE_TOWER:
+        typedContainer = this.owner as StructureTower;
+
+        currentEnergy = typedContainer.energy;
+        currentTotalEnergy = typedContainer.energyCapacity;
+
+        return currentEnergy === currentTotalEnergy;
     }
     return false;
   }

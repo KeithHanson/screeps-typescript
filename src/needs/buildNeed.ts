@@ -1,6 +1,10 @@
 import {Need} from "../need";
 import {NeedQueue} from "../needQueue";
 import {NeedPriorities} from "./needPriorities";
+import * as Config from "../config";
+// import {Traveler} from "traveler";
+
+// const travelerInstance = new Traveler();
 
 export const ROOM_NAME = "W7N3";
 
@@ -15,7 +19,7 @@ export class BuildNeed extends Need {
     super(NeedPriorities.BUILD, "buildSite", site.pos);
 
     this.owner = site;
-    this.maxActiveNeeds = 8;
+    this.maxActiveNeeds = 3;
 
     NeedQueue.currentQueue().insertNeed(this);
   }
@@ -26,7 +30,7 @@ export class BuildNeed extends Need {
       if (this.worker.carry.energy === this.worker.carryCapacity || this.worker.memory.building === true) {
         this.handleTransfer();
       } else {
-        this.handleHarvest();
+        this.getEnergy();
       }
     }
 
@@ -37,12 +41,6 @@ export class BuildNeed extends Need {
     }
 
     return result;
-  }
-
-  private handleHarvest(): void {
-    if (this.worker.harvest(ENERGY_SOURCE) === ERR_NOT_IN_RANGE) {
-      this.worker.moveTo(ENERGY_SOURCE.pos);
-    }
   }
 
   private handleTransfer(): void {
@@ -58,10 +56,24 @@ export class BuildNeed extends Need {
 
     if (transferResult === ERR_NOT_IN_RANGE) {
       this.worker.moveTo(this.owner.pos);
+      // travelerInstance.travelTo(this.worker, {pos: this.owner.pos});
     }
   }
 
   private checkCompletion(): boolean {
-    return Game.getObjectById(this.owner.id) === undefined;
+    try {
+      const result = this.owner === undefined;
+      if (!result) {
+        const results = Game.rooms[Config.ROOM_NAME].lookAt(this.owner.pos.x, this.owner.pos.y);
+        const filterResults = results.some( (i) => i.type === "structure" );
+
+        return filterResults;
+      } else {
+        return result;
+      }
+    } catch (error) {
+      this.worker.memory.isBusy = false;
+      return true;
+    }
   }
 }

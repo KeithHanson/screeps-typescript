@@ -6,7 +6,11 @@
     "forin": false,
     "interface-name": [false],
     "no-console": [false],
+    "member-ordering": [false],
+    "prefer-const": [false],
     "no-namespace": [true, "allow-declarations"],
+    "ordered-imports": [false],
+    "object-literal-sort-keys": [false],
     "trailing-comma": [
       true,
       "never"

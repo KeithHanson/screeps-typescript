@@ -1,8 +1,9 @@
+import * as Config from "../config";
 import {Need} from "../need";
 import {NeedQueue} from "../needQueue";
 import {NeedPriorities} from "./needPriorities";
 
-export const BASE_CREEP_BODY = [WORK, WORK, MOVE, MOVE, CARRY];
+export const BASE_CREEP_BODY = [WORK, MOVE, CARRY];
 
 export class CreepNeed extends Need {
   public owner: Spawn;
@@ -17,7 +18,9 @@ export class CreepNeed extends Need {
 
   public doJob(): boolean {
     if (this.owner) {
-      const result = this.owner.spawnCreep(BASE_CREEP_BODY, `${this.hash()}-${this.generateUUID()}`);
+      const result = this.owner.spawnCreep(BASE_CREEP_BODY, `${this.generateUUID()}`);
+
+      Config.debugLog(`RESULT OF SPAWN CREEP: ${result}`);
 
       if (result === 0) {
         return true;
